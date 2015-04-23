@@ -121,20 +121,20 @@ public class Options {
     }
 
     public enum PaintColor {
-        PBSB("Black"),
         PBCW("Solid White"),
+        PBSB("Black"),
+        PMAB("Metallic Brown"),
+        PMBL("Obsidian Black"),
+        PMMB("Metallic Blue"),
+        PMNG("Steel Grey"),
+        PMSG("Metallic Green"),
         PMSS("Silver"),
         PMTG("Metallic Dolphin Gray"),
-        PMAB("Metallic Brown"),
-        PMMB("Metallic Blue"),
-        PMSG("Metallic Green"),
-        PPSW("Pearl White"),
-        PMNG("Steel Grey"),
         PPMR("Premium Multicoat Red"),
-        PPSR("Premium Signature Red"),
-        PPTI("Titanium"),
-        PMBL("Obsidian Black"),
         PPSB("Deep Blue Metallic"),
+        PPSR("Premium Signature Red"),
+        PPSW("Pearl White"),
+        PPTI("Titanium"),
         Unknown("Unknown");
 
         private String descriptiveName;
@@ -179,6 +179,7 @@ public class Options {
     
     public enum BatteryType  {
         BT85("85kWh"),
+        BT70("70kWh"),
         BT60("60kWh"),
         BT40("40kWh (Software Limited)"),
         Unknown("Unknown");
@@ -192,6 +193,12 @@ public class Options {
 
     public enum AdapterType  {
         AD02("NEMA 14-50"),
+        AD04("European 3-Phase"),
+        AD05("European 3-Phase, IT"),
+        AD06("Schuko (1 phase, 230V 13A)"),
+        AD07("Red IEC309 (3 phase 400V 16A)"),
+        ADPX2("Type 2 Public Charging Connector"),
+        ADX8("Blue IEC309 (1 phase 230V 32A)"),
         Unknown("Unknown");
 
         private String descriptiveName;
@@ -200,12 +207,12 @@ public class Options {
 
         @Override public String toString() { return descriptiveName; }
     }
-
-    public enum DriveType  {
+    
+    public enum DriveType {
         DV2W("RWD"),
         DV4W("AWD"),
         Unknown("Unknown");
-
+        
         private String descriptiveName;
 
         DriveType(String name) { this.descriptiveName = name; }
@@ -213,12 +220,17 @@ public class Options {
         @Override public String toString() { return descriptiveName; }
     }
 
+
     public enum Model {
+        // RWD Standard Models
         S60("S60"),
         S85("S85"),
-        S85D("S85D"),
+        // RWD Performance Models
         P85("P85"),
         P85Plus("P85+"),
+        // AWD Standard & Performance Models
+        S70D("S70D"),
+        S85D("S85D"),
         P85D("P85D");
         
         private String descriptiveName;
@@ -298,7 +310,10 @@ public class Options {
     public Region region() { return optionToEnum(Region.class, "RE"); }
     public TrimLevel trimLevel() { return optionToEnum(TrimLevel.class, "TM"); }
     public DriveSide driveSide() { return optionToEnum(DriveSide.class, "DR"); }
-    public BatteryType batteryType() { return optionToEnum(BatteryType.class, "BT"); }
+    public BatteryType batteryType() {
+        BatteryType bt = optionToEnum(BatteryType.class, "BT");
+        return (bt == Options.BatteryType.Unknown) ? Options.BatteryType.BT70 : bt;
+    }
     public RoofType roofType() { return optionToEnum(RoofType.class, "RF"); }
     public WheelType wheelType() { return optionToEnum(WheelType.class, "WT"); }
     public DecorType decorType() { return optionToEnum(DecorType.class, "ID"); }
@@ -313,9 +328,12 @@ public class Options {
         return dt;
     }
     public Model model() {
-        if (isP85D()) { return Model.P85D; }
-        else if (isAWD()) { return Model.S85D; }
-        else if (isPerfPlus()) { return Model.P85Plus; }
+        if (isAWD()) {
+            if (isP85D()) { return Model.P85D; }
+            if (batteryType() == Options.BatteryType.BT85) { return Model.S85D; }
+            return Model.S70D;
+        }
+        if (isPerfPlus()) { return Model.P85Plus; }
         else if (isPerformance()) { return Model.P85; }
         else if (batteryType() == Options.BatteryType.BT85) { return Model.S85; } 
         return Model.S60;
@@ -349,6 +367,8 @@ public class Options {
     public boolean hasFogLamps() { return hasOption("FG"); }
     public boolean hasExtendedNappaTrim() { return hasOption("IX"); }
     public boolean hasYachtFloor() { return hasOption("YF"); }
+    // Brake Calipers: Red = BC0R, Black = BC0B
+    public boolean hasRedCalipers() { return optionsFound.get("BC0R") != null; }
     
     @Override
     public String toString() {
